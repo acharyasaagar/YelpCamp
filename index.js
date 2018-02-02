@@ -1,53 +1,96 @@
-const express = require('express');
-const app = express();
-const bodyParser = require('body-parser');
+const   express =          require('express'),
+        app =              express(),
+        bodyParser =       require('body-parser'),
+        mongoose =         require('mongoose');
 
+//Connect Mongoose 
+mongoose.connect("mongodb://localhost/yelp_camp");
 //Use body Parser
 app.use(bodyParser.urlencoded({extended:true}));
+//COnfiguring ejs as default view engine
+app.set('view engine', 'ejs');
 
-//The campgrounds array
-let camps = [
-    {name:'Nagarkot Camp', image:"https://farm8.staticflickr.com/7252/7626464792_3e68c2a6a5.jpg"},
-    {name:'Mount Makalu', image:"https://farm3.staticflickr.com/2259/2182093741_164dc44a24.jpg"},
-    {name:"Lhotse Camp", image:"https://farm4.staticflickr.com/3270/2617191414_c5d8a25a94.jpg"},
-    {name:'Nagarkot Camp', image:"https://farm8.staticflickr.com/7252/7626464792_3e68c2a6a5.jpg"},
-    {name:'Mount Makalu', image:"https://farm3.staticflickr.com/2259/2182093741_164dc44a24.jpg"},
-    {name:"Lhotse Camp", image:"https://farm4.staticflickr.com/3270/2617191414_c5d8a25a94.jpg"},
-    {name:'Nagarkot Camp', image:"https://farm8.staticflickr.com/7252/7626464792_3e68c2a6a5.jpg"},
-    {name:'Mount Makalu', image:"https://farm3.staticflickr.com/2259/2182093741_164dc44a24.jpg"},
-    {name:"Lhotse Camp", image:"https://farm4.staticflickr.com/3270/2617191414_c5d8a25a94.jpg"},
-    {name:'Nagarkot Camp', image:"https://farm8.staticflickr.com/7252/7626464792_3e68c2a6a5.jpg"},
-    {name:'Mount Makalu', image:"https://farm3.staticflickr.com/2259/2182093741_164dc44a24.jpg"},
-    {name:"Lhotse Camp", image:"https://farm4.staticflickr.com/3270/2617191414_c5d8a25a94.jpg"}
-];
+//Schema setup
+
+let campgroundSchema = new mongoose.Schema({
+    name: String,
+    image: String,
+    description: String
+});
+
+let Campground = mongoose.model('Campground', campgroundSchema);
+
+// Campground.create( 
+//     {
+//         name:"Lato Beach", 
+//         image:"https://farm4.staticflickr.com/3872/14435096036_39db8f04bc.jpg",
+//         description: "Feel the ocean. The blue, WOW!!!"
+//     }, (err, Campground) => {
+//         if(err){
+//             console.log(err);
+//         } else{
+//          console.log(' Added to the database ' + Campground.name );
+//         }
+// });
 
 // Server port 
 let port = 8080;
 app.listen(port, () => console.log(`server running at port ${port}`));
 
-//COnfiguring ejs as default view engine
-app.set('view engine', 'ejs');
-
 // The root route 
 app.get('/',(req, res) => {
-    res.render('index');
+    res.render('home');
 });
 
 // The campgrounds GET route
 app.get('/campgrounds', (req, res) => {
-    res.render('campgrounds', { camps });
+    //Get all Campgrounds from database
+    Campground.find( {}, (err, campgrounds) => {
+        if(err){
+            console.log(err);
+        } else{
+            res.render('index', { camps: campgrounds});
+        }
+    });
+    // 
 });
 
 // The campgrounds POST route
 app.post('/campgrounds',(req, res) => {
     let name = req.body.name;
     let image = req.body.image;
-    let newCapmground = { name: name, image:image };
-    camps.push(newCapmground);
-    res.redirect('/campgrounds');
+    let newCampground = { name, image };
+    Campground.create( newCampground, (err, campground) => {
+            if(err){
+                console.log(err);
+            } else{
+                console.log(campground.name +' Added to database');
+                res.redirect('/campgrounds');
+            }
+        });
+    
 });
 
 // The campgorunds/new route for rendering the form 
 app.get('/campgrounds/new', (req, res) => {
     res.render('new');
 });
+
+//The show route 
+
+app.get('/campgrounds/:id', (req, res) => {
+    Campground.find( {}, (err, campgrounds) => {
+        if(err){
+            console.log(err);
+        } else{
+            console.log(req.params)
+            campgrounds.forEach( (campground) => {
+                if(campground._id == req.params.id){
+                    console.log(req.params.id);
+                    res.render('show', { campground });
+                }
+            } );
+        }
+    });
+});
+
