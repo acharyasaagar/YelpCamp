@@ -77,19 +77,12 @@ app.get('/campgrounds/new', (req, res) => {
 });
 
 //The show route 
-
 app.get('/campgrounds/:id', (req, res) => {
-    Campground.find( {}, (err, campgrounds) => {
+    Campground.findById(req.params.id, (err, campground) => {
         if(err){
             console.log(err);
-        } else{
-            console.log(req.params)
-            campgrounds.forEach( (campground) => {
-                if(campground._id == req.params.id){
-                    console.log(req.params.id);
-                    res.render('show', { campground });
-                }
-            } );
+        } else {
+            res.render('show', {campground})
         }
     });
 });
